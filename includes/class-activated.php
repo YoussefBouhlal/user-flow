@@ -16,7 +16,7 @@ class User_Flow_Activate {
     /**
      * Init the Activation class
      */
-    public static function init() {
+    public static function plugin_activated() {
         
         self::generate_pages();
         
@@ -38,6 +38,11 @@ class User_Flow_Activate {
                 'title'     => __( 'Your Account', USER_FLOW_TEXT_DOMAIN ),
                 'content'   => '[user-flow-account-info]'
             ),
+            'member-register' => array(
+                'slug'      => 'member-register',
+                'title'     => __( 'Register', USER_FLOW_TEXT_DOMAIN ),
+                'content'   => '[user-flow-register-form]'
+            )
         );
 
         foreach ( $required_pages as $page ) {

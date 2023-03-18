@@ -21,6 +21,12 @@ if ( $atts['logged_out'] ) {
     <?php
 }
 
+if ( $atts['registered'] ) {
+    ?>
+        <p class="login-info"><?php printf( __( 'You have successfully registered to <strong>%s</strong>. We have emailed your password to the email address you entered.', USER_FLOW_TEXT_DOMAIN ), get_bloginfo( 'name' ) ); ?></p>
+    <?php
+}
+
 ?>
 
 <div class="login-form-container">

@@ -81,6 +81,8 @@ class User_Flow {
         add_filter( 'authenticate', array( 'User_Flow_Redirection', 'redirect_if_errors' ), PHP_INT_MAX, 3 );
         add_action( 'wp_logout', array( 'User_Flow_Redirection', 'redirect_after_logout' ) );
         add_filter( 'login_redirect', array( 'User_Flow_Redirection', 'redirect_after_login' ), 10, 3 );
+        add_action( 'login_form_register', array( 'User_Flow_Redirection', 'redirect_to_custom_register' ) );
+        add_action( 'login_form_register', array( 'User_Flow_Redirection', 'submit_register_form' ) );
 
     }
 

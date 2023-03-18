@@ -19,6 +19,7 @@ class User_Flow_Shortcodes {
     public static function init() {
 
 		add_shortcode( 'user-flow-login-form', __CLASS__ . '::render_login_form' );
+        add_shortcode( 'user-flow-register-form', __CLASS__ . '::render_register_form' );
 
     }
 
@@ -35,6 +36,7 @@ class User_Flow_Shortcodes {
         $atts['errors']     = self::get_errors();
         $atts['logged_out'] = isset( $_REQUEST['logged_out'] ) && $_REQUEST['logged_out'] == true;
         $atts['redirect']   = '';
+        $atts['registered'] = isset( $_REQUEST['registered'] );
         
         if ( isset( $_REQUEST['redirect_to'] ) ) {
             $atts['redirect'] = wp_validate_redirect( sanitize_url( $_REQUEST['redirect_to'] ), $atts['redirect'] );
@@ -53,6 +55,34 @@ class User_Flow_Shortcodes {
     }
 
     /**
+     * Render the [user-flow-register-form] shortcode
+     */
+    public static function render_register_form( $atts, $content = null ) {
+
+        $atts = shortcode_atts( array(
+            'show_title'    => false
+        ), $atts );
+
+        $atts['show_title'] = sanitize_text_field( $atts['show_title'] );
+        $atts['errors']     = self::get_errors();
+
+        if ( is_user_logged_in() ) {
+
+            $content = __( 'You are already signed in.', USER_FLOW_TEXT_DOMAIN );
+
+        } elseif ( ! get_option( 'users_can_register' ) ) {
+
+            $content = __( 'Registering new users is currently not allowed.', USER_FLOW_TEXT_DOMAIN );
+
+        } else {
+
+            $content = user_flow_get_template( 'register_form', $atts );
+        }
+
+        return $content;
+    }
+
+    /**
      * Get errors if exist
      */
     private static function get_errors() {
@@ -63,37 +93,19 @@ class User_Flow_Shortcodes {
             $error_codes = explode( ',', $_REQUEST['login'] );
 
             foreach ( $error_codes as $code ) {
-                $errors[] = self::get_error_message( $code );
+                $errors[] = user_flow_get_error_message( $code );
+            }
+        }
+
+        if ( isset( $_REQUEST['register-errors'] ) ) {
+            $error_codes = explode( ',', $_REQUEST['register-errors'] );
+            
+            foreach ( $error_codes as $code ) {
+                $attributes['errors'] []= user_flow_get_error_message( $code );
             }
         }
 
         return $errors;
     }
-
-    /**
-     * Get error messages from error codes
-     */
-    private static function get_error_message( $error_code ) {
-
-        $message = __( 'Please try again later.', USER_FLOW_TEXT_DOMAIN );
-
-        switch ( $error_code ) {
-            case 'empty_username':
-                $message = __( 'You need to enter an email to login.', USER_FLOW_TEXT_DOMAIN );
-            break;
-            case 'empty_password':
-                $message = __( 'You need to enter a password to login.', USER_FLOW_TEXT_DOMAIN );
-            break;
-            case 'invalid_username':
-                $message = __( 'Your email is incorrect.', USER_FLOW_TEXT_DOMAIN );
-            break;
-            case 'incorrect_password':
-                $message = sprintf( __( 'Your passsword is incorrect.', USER_FLOW_TEXT_DOMAIN ) );
-            break;
-        }
-
-        return $message;
-    }
-
 
 }

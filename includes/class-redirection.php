@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 class User_Flow_Redirection {
 
     /**
-     * Redirect from from standard login to our custom login page
+     * Redirect from standard login to our custom login page
      */
     public static function redirect_to_custom_login() {
 
@@ -96,6 +96,64 @@ class User_Flow_Redirection {
     }
 
     /**
+     * Redirect from standard register to our custom register page
+     */
+    public static function redirect_to_custom_register() {
+
+        if ( $_SERVER['REQUEST_METHOD'] == 'GET' ) {
+
+            if ( is_user_logged_in() ) {
+
+                self::redirect_logged_in_user();
+
+            } else {
+
+                wp_redirect( home_url( 'member-register' ) );
+            }
+
+            exit;
+        }
+    }
+
+    /**
+     * Handle the register form submit
+     */
+    public static function submit_register_form() {
+
+        if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
+
+            $redirect_url = home_url( 'member-register' );
+
+            if ( ! get_option( 'users_can_register' ) ) {
+                
+                $redirect_url = add_query_arg( 'register-errors', 'closed', $redirect_url );
+
+            } else {
+
+                $email      = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+                $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( $_POST['first_name'] ) : '';
+                $last_name  = isset( $_POST['last_name'] ) ? sanitize_text_field( $_POST['last_name'] ) : '';
+                $result     = self::register_user( $email, $first_name, $last_name );
+
+                if ( is_wp_error( $result ) ) {
+
+                    $errors         = join( ',', $result->get_error_codes() );
+                    $redirect_url   = add_query_arg( 'register-errors', $errors, $redirect_url );
+
+                } else {
+
+                    $redirect_url   = home_url( 'member-login' );
+                    $redirect_url   = add_query_arg( 'registered', $email, $redirect_url );
+                }
+            }
+
+            wp_redirect( $redirect_url );
+            exit;
+        }
+
+    }
+
+    /**
      * Redirect the logged in users
      */
     private static function redirect_logged_in_user( $redirect_to = null ) {
@@ -113,6 +171,39 @@ class User_Flow_Redirection {
         } else {
             wp_redirect( home_url( 'member-account' ) );
         }
+    }
+
+    /**
+     * 
+     */
+    private static function register_user( $email, $first_name, $last_name ) {
+        $errors = new WP_Error();
+
+        if ( ! is_email( $email ) ) {
+
+            $errors->add( 'email', user_flow_get_error_message( 'email' ) );
+            return $errors;
+        }
+
+        if ( username_exists( $email ) || email_exists( $email ) ) {
+
+            $errors->add( 'email_exists', user_flow_get_error_message( 'email_exists') );
+            return $errors;
+        }
+
+        $password   = wp_generate_password( 12, false );
+        $user_data  = array(
+            'user_login'    => $email,
+            'user_email'    => $email,
+            'user_pass'     => $password,
+            'first_name'    => $first_name,
+            'last_name'     => $last_name,
+            'nickname'      => $first_name,
+        );
+        $user_id = wp_insert_user( $user_data );
+        wp_new_user_notification( $user_id, $password );
+        
+        return $user_id;
     }
 
 }
